@@ -1,0 +1,31 @@
+name: Build YOUR Linux OS
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack project
+        run: |
+          mkdir -p src
+          unzip -q -o project.zip -d src
+          if [ -f patch.zip ]; then unzip -q -o patch.zip -d src; fi
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Fetch proot
+        working-directory: src
+        run: bash scripts/fetch-proot.sh
+      - name: Build APK
+        working-directory: src
+        run: gradle assembleDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YourLinuxOS-apk
+          path: src/app/build/outputs/apk/debug/app-debug.apk
